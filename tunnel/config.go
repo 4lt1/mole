@@ -50,6 +50,8 @@ func (r SSHConfigFile) Get(host string) *SSHHost {
 		user = ""
 	}
 
+	local := r.getLocal(host)
+	remote := r.getRemote(host)
 	key := r.getKey(host)
 
 	return &SSHHost{
@@ -57,6 +59,10 @@ func (r SSHConfigFile) Get(host string) *SSHHost {
 		Port:     port,
 		User:     user,
 		Key:      key,
+		LocalForward: LocalForward{
+			Local:  local,
+			Remote: remote,
+		},
 	}
 }
 
@@ -72,6 +78,30 @@ func (r SSHConfigFile) getHostname(host string) string {
 	}
 
 	return hostname
+}
+
+func (r SSHConfigFile) getLocal(host string) string {
+	LocalForward, err := r.sshConfig.Get(host, "LocalForward")
+	if err != nil {
+		return ""
+	}
+
+	if len(LocalForward) == 2 {
+		return strings.Split(LocalForward, " ")[0]
+	}
+	return ""
+}
+
+func (r SSHConfigFile) getRemote(host string) string {
+	LocalForward, err := r.sshConfig.Get(host, "LocalForward")
+	if err != nil {
+		return ""
+	}
+
+	if len(LocalForward) == 2 {
+		return strings.Split(LocalForward, " ")[1]
+	}
+	return ""
 }
 
 func (r SSHConfigFile) getKey(host string) string {
@@ -94,10 +124,17 @@ func (r SSHConfigFile) getKey(host string) string {
 
 // SSHHost represents a host configuration extracted from a ssh config file.
 type SSHHost struct {
-	Hostname string
-	Port     string
-	User     string
-	Key      string
+	Hostname     string
+	Port         string
+	User         string
+	Key          string
+	LocalForward LocalForward
+}
+
+// LocalForward represents a LocalForward configuration for SSHHost.
+type LocalForward struct {
+	Local  string
+	Remote string
 }
 
 // String returns a string representation of a SSHHost.
