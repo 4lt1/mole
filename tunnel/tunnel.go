@@ -37,7 +37,6 @@ func NewServer(user, address, key string) (*Server, error) {
 		host = args[0]
 		port = args[1]
 	}
-
 	c := filepath.Join(os.Getenv("HOME"), ".ssh", "config")
 	if _, err := os.Stat(c); err != nil {
 		hostname = host
@@ -103,13 +102,24 @@ type Tunnel struct {
 // New creates a new instance of Tunnel.
 func New(localAddress string, server *Server, remoteAddress string) *Tunnel {
 
-	if localAddress == "" {
+	c := filepath.Join(os.Getenv("HOME"), ".ssh", "config")
+	r, _ := NewSSHConfigFile(c)
+
+	sshcfg := r.Get(server.Name)
+	local := reconcileLocal(localAddress, sshcfg.LocalForward.Local)
+	remote := reconcileRemote(remoteAddress, sshcfg.LocalForward.Remote)
+
+	if localAddress == "" && local != "" {
+		localAddress = local
+	} else if localAddress == "" {
 		localAddress = "127.0.0.1:0"
 	} else if strings.HasPrefix(localAddress, ":") {
 		localAddress = fmt.Sprintf("127.0.0.1%s", localAddress)
 	}
 
-	if strings.HasPrefix(remoteAddress, ":") {
+	if remoteAddress == "" && remote != "" {
+		remoteAddress = remote
+	} else if strings.HasPrefix(remoteAddress, ":") {
 		remoteAddress = fmt.Sprintf("127.0.0.1%s", remoteAddress)
 	}
 
@@ -303,6 +313,30 @@ func reconcileKey(givenKey, resolvedKey string) string {
 
 	if givenKey == "" && resolvedKey != "" {
 		return resolvedKey
+	}
+
+	return ""
+}
+
+func reconcileLocal(givenLocal, resolvedLocal string) string {
+	if resolvedLocal != "" {
+		return resolvedLocal
+	}
+
+	if resolvedLocal == "" && givenLocal != "" {
+		return givenLocal
+	}
+
+	return ""
+}
+
+func reconcileRemote(givenRemote, resolvedRemote string) string {
+	if resolvedRemote != "" {
+		return resolvedRemote
+	}
+
+	if resolvedRemote == "" && givenRemote != "" {
+		return givenRemote
 	}
 
 	return ""
