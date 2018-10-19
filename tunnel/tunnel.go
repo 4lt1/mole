@@ -102,26 +102,12 @@ type Tunnel struct {
 // New creates a new instance of Tunnel.
 func New(localAddress string, server *Server, remoteAddress string) *Tunnel {
 
-	c := filepath.Join(os.Getenv("HOME"), ".ssh", "config")
-	r, _ := NewSSHConfigFile(c)
+	f := filepath.Join(os.Getenv("HOME"), ".ssh", "config")
+	c, _ := NewSSHConfigFile(f)
 
-	sshcfg := r.Get(server.Name)
-	local := reconcileLocal(localAddress, sshcfg.LocalForward.Local)
-	remote := reconcileRemote(remoteAddress, sshcfg.LocalForward.Remote)
-
-	if localAddress == "" && local != "" {
-		localAddress = local
-	} else if localAddress == "" {
-		localAddress = "127.0.0.1:0"
-	} else if strings.HasPrefix(localAddress, ":") {
-		localAddress = fmt.Sprintf("127.0.0.1%s", localAddress)
-	}
-
-	if remoteAddress == "" && remote != "" {
-		remoteAddress = remote
-	} else if strings.HasPrefix(remoteAddress, ":") {
-		remoteAddress = fmt.Sprintf("127.0.0.1%s", remoteAddress)
-	}
+	sh := c.Get(server.Name)
+	localAddress = reconcileLocal(localAddress, sh.LocalForward.Local)
+	remoteAddress = reconcileRemote(remoteAddress, sh.LocalForward.Remote)
 
 	return &Tunnel{
 		local:  localAddress,
@@ -319,25 +305,28 @@ func reconcileKey(givenKey, resolvedKey string) string {
 }
 
 func reconcileLocal(givenLocal, resolvedLocal string) string {
-	if resolvedLocal != "" {
+
+	if givenLocal == "" && resolvedLocal != "" {
 		return resolvedLocal
 	}
-
-	if resolvedLocal == "" && givenLocal != "" {
-		return givenLocal
+	if givenLocal == "" {
+		return "127.0.0.1:0"
+	}
+	if strings.HasPrefix(givenLocal, ":") {
+		return fmt.Sprintf("127.0.0.1%s", givenLocal)
 	}
 
-	return ""
+	return givenLocal
 }
 
 func reconcileRemote(givenRemote, resolvedRemote string) string {
-	if resolvedRemote != "" {
+
+	if givenRemote == "" && resolvedRemote != "" {
 		return resolvedRemote
 	}
-
-	if resolvedRemote == "" && givenRemote != "" {
-		return givenRemote
+	if strings.HasPrefix(givenRemote, ":") {
+		return fmt.Sprintf("127.0.0.1%s", givenRemote)
 	}
 
-	return ""
+	return givenRemote
 }

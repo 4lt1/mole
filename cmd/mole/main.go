@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/davrodpin/mole/cli"
-	"github.com/davrodpin/mole/storage"
-	"github.com/davrodpin/mole/tunnel"
+	"github.com/4ltieres/mole/cli"
+	"github.com/4ltieres/mole/storage"
+	"github.com/4ltieres/mole/tunnel"
 	log "github.com/sirupsen/logrus"
 )
 
