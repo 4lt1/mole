@@ -50,20 +50,17 @@ func (r SSHConfigFile) Get(host string) *SSHHost {
 		user = ""
 	}
 
-	local := r.getLocal(host)
-	remote := r.getRemote(host)
 	key := r.getKey(host)
 
-	localForward := LocalForward{
-		Local:  local,
-		Remote: remote,
-	}
 	return &SSHHost{
-		Hostname:     hostname,
-		Port:         port,
-		User:         user,
-		Key:          key,
-		LocalForward: localForward}
+		Hostname: hostname,
+		Port:     port,
+		User:     user,
+		Key:      key,
+		LocalForward: LocalForward{
+			Local:  r.getLocal(host),
+			Remote: r.getRemote(host),
+		}}
 }
 
 func (r SSHConfigFile) getHostname(host string) string {
